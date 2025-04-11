@@ -1,0 +1,24 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# 必要なパッケージをインストール
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# 依存関係ファイルをコピー
+COPY pyproject.toml .
+COPY poetry.lock .
+
+# 依存関係をインストール
+RUN poetry install
+
+# テストコードとアプリケーションコードをコピー
+COPY tests/ tests/
+COPY app/ app/
+COPY .coveragerc .
+
+# テストを実行するコマンド
+CMD ["pytest", "tests/", "-v", "--cov=app", "--cov-report=html"] 

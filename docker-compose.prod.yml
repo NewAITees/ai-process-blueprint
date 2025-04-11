@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    image: ai-process-blueprint:latest
+    restart: always
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - blueprint_templates:/app/templates
+    environment:
+      - PORT=${PORT:-8080}
+      - TEMPLATE_DIR=/app/templates
+      - DEBUG=false
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - ENABLE_MCP=${ENABLE_MCP:-true}
+      - ENABLE_HTTP=${ENABLE_HTTP:-true}
+
+volumes:
+  blueprint_templates:
+    driver: local 

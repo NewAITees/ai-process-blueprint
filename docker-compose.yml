@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - ./templates:/app/templates
+    environment:
+      - PORT=${PORT:-8080}
+      - TEMPLATE_DIR=/app/templates
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - ENABLE_MCP=${ENABLE_MCP:-true}
+      - ENABLE_HTTP=${ENABLE_HTTP:-true}
+    restart: unless-stopped 

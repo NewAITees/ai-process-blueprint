@@ -6,6 +6,7 @@ Sets up the FastAPI application with MCP integration.
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
 from app.config import settings, setup_logging
 from app.api.routes import router as api_router
@@ -56,7 +57,36 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """ヘルスチェックエンドポイント"""
-        return {"status": "healthy"}
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "version": settings.VERSION
+        }
+
+    # APIルーターとMCPサーバーのマウント
+    if settings.ENABLE_HTTP:
+        from app.api.routes import template_router
+        logger.info("Registering HTTP API routes...")
+        app.include_router(template_router)
+
+    if settings.ENABLE_MCP:
+        from app.mcp.tools import mcp_server
+        logger.info("Mounting MCP server...")
+        # FastMCP v0.4.0以降では .app は不要かもしれないが、互換性のために残す
+        # ドキュメントを確認すること
+        try:
+            app.mount("/mcp", mcp_server.app)
+        except AttributeError:
+             # もし .app がなければ mcp_server 自体を渡す (FastMCPのバージョンによる)
+             logger.warning("mcp_server.app not found, attempting to mount mcp_server directly.")
+             app.mount("/mcp", mcp_server)
+
+        # MCPツール定義を提供するエンドポイント
+        @app.get("/mcp/tools.json")
+        async def get_mcp_tools():
+            """Returns the MCP tool definitions in OpenAPI format."""
+            logger.debug("Request received for /mcp/tools.json")
+            return mcp_server.get_tool_definitions()
 
     return app
 
