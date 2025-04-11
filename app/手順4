@@ -1,0 +1,218 @@
+# HTTP APIインターフェースの実装
+
+## 背景
+
+AI Process Blueprintの主要なインターフェースの一つとして、HTTPベースのRESTful APIが必要です。このAPIは外部クライアントがテンプレートを管理するための標準的なインターフェースを提供します。
+
+## 目的
+
+- FastAPIを使用したHTTP RESTful APIを実装する
+- テンプレート管理のための完全なCRUDエンドポイントを提供する
+- OpenAPI仕様に準拠した自動ドキュメントを生成する
+- 適切なエラー処理とレスポンス形式を定義する
+
+## タスク
+
+1. FastAPIルーターの設定
+   - `app/api/routes.py` にテンプレート管理のためのルーターを設定
+   ```python
+   template_router = APIRouter(prefix="/api/templates", tags=["templates"])
+   ```
+
+2. テンプレート取得エンドポイントの実装
+   - 単一テンプレート取得エンドポイント
+   ```python
+   @template_router.get("/{title}", response_model=Template)
+   async def get_template(title: str, service: TemplateService = Depends(get_template_service)):
+       try:
+           return await service.get_template(title)
+       except TemplateNotFoundError:
+           raise HTTPException(status_code=404, detail="Template not found")
+   ```
+   
+   - テンプレート一覧取得エンドポイント
+   ```python
+   @template_router.get("/", response_model=List[Template])
+   async def list_templates(
+       limit: int = Query(20, ge=1, le=100),
+       offset: int = Query(0, ge=0),
+       username: Optional[str] = None,
+       service: TemplateService = Depends(get_template_service)
+   ):
+       templates = await service.list_templates(limit, offset, username)
+       return templates
+   ```
+
+3. テンプレート作成エンドポイントの実装
+   ```python
+   @template_router.post("/", response_model=Template, status_code=201)
+   async def create_template(
+       template: TemplateCreate,
+       service: TemplateService = Depends(get_template_service)
+   ):
+       try:
+           return await service.create_template(template)
+       except TemplateAlreadyExistsError:
+           raise HTTPException(status_code=409, detail="Template with this title already exists")
+   ```
+
+4. テンプレート更新エンドポイントの実装
+   ```python
+   @template_router.put("/{title}", response_model=Template)
+   async def update_template(
+       title: str,
+       template_update: TemplateUpdate,
+       service: TemplateService = Depends(get_template_service)
+   ):
+       try:
+           return await service.update_template(title, template_update)
+       except TemplateNotFoundError:
+           raise HTTPException(status_code=404, detail="Template not found")
+   ```
+
+5. テンプレート削除エンドポイントの実装
+   ```python
+   @template_router.delete("/{title}", status_code=204)
+   async def delete_template(
+       title: str,
+       service: TemplateService = Depends(get_template_service)
+   ):
+       try:
+           success = await service.delete_template(title)
+           if not success:
+               raise HTTPException(status_code=500, detail="Failed to delete template")
+       except TemplateNotFoundError:
+           raise HTTPException(status_code=404, detail="Template not found")
+   ```
+
+6. 依存性注入の設定
+   - テンプレートサービスの依存性を設定
+   ```python
+   def get_template_service():
+       repository = FileSystemTemplateRepository(settings.TEMPLATE_DIR)
+       return TemplateService(repository)
+   ```
+
+7. エラーハンドリングの実装
+   - カスタム例外ハンドラーの設定
+   ```python
+   @app.exception_handler(TemplateNotFoundError)
+   async def template_not_found_exception_handler(request: Request, exc: TemplateNotFoundError):
+       return JSONResponse(
+           status_code=404,
+           content={"error": "Template not found", "message": str(exc)}
+       )
+   
+   @app.exception_handler(TemplateAlreadyExistsError)
+   async def template_already_exists_exception_handler(request: Request, exc: TemplateAlreadyExistsError):
+       return JSONResponse(
+           status_code=409,
+           content={"error": "Template already exists", "message": str(exc)}
+       )
+   ```
+
+8. レスポンスモデルの拡張
+   - リスト取得用の共通レスポンスモデル
+   ```python
+   class TemplateListResponse(BaseModel):
+       templates: List[Template]
+       total: int
+       limit: int
+       offset: int
+   ```
+
+9. バリデーションの実装
+   - 入力データのバリデーション（タイトル長、コンテンツサイズなど）
+   ```python
+   class TemplateCreate(BaseModel):
+       title: str = Field(..., min_length=1, max_length=100)
+       content: str = Field(..., max_length=102400)  # 100KB制限
+       description: str = Field("", max_length=500)
+       username: str = Field("anonymous", max_length=50)
+   ```
+
+10. APIメタデータの設定
+    - Swagger UI / ReDocのカスタマイズ
+    ```python
+    app = FastAPI(
+        title="AI Process Blueprint API",
+        description="テンプレートベースでAIに作業手順を提供するサービスのAPI",
+        version="1.0.0",
+        docs_url="/api/docs",
+        redoc_url="/api/redoc",
+        openapi_url="/api/openapi.json"
+    )
+    ```
+
+## 受け入れ基準
+
+- [ ] すべてのエンドポイント（一覧表示、取得、作成、更新、削除）が実装されている
+- [ ] 各エンドポイントが適切なHTTPメソッドとステータスコードを使用している
+- [ ] エラーハンドリングが適切に実装されている
+- [ ] 入力バリデーションが適切に実装されている
+- [ ] OpenAPI仕様に基づいた自動ドキュメントが生成される（Swagger UI / ReDoc）
+- [ ] 依存性注入が適切に設定されている
+- [ ] コアサービスとの連携が正しく機能する
+
+## 実装メモ
+
+### エンドポイント設計
+
+| エンドポイント | メソッド | 目的 | ステータスコード |
+|--------------|--------|------|--------------|
+| `/api/templates` | GET | テンプレート一覧取得 | 200 OK |
+| `/api/templates/{title}` | GET | 特定テンプレート取得 | 200 OK / 404 Not Found |
+| `/api/templates` | POST | テンプレート作成 | 201 Created / 409 Conflict |
+| `/api/templates/{title}` | PUT | テンプレート更新 | 200 OK / 404 Not Found |
+| `/api/templates/{title}` | DELETE | テンプレート削除 | 204 No Content / 404 Not Found |
+
+### OpenAPIカスタマイズの擬似コード
+
+```
+FUNCTION setup_api_metadata(app)
+    app.title = "AI Process Blueprint API"
+    app.description = "テンプレートベースでAIに作業手順を提供するサービスのAPI"
+    app.version = "1.0.0"
+    
+    // タグの設定
+    app.openapi_tags = [
+        {
+            "name": "templates",
+            "description": "テンプレート管理操作",
+            "externalDocs": {
+                "description": "テンプレート形式の詳細",
+                "url": "/api/docs#section/Templates"
+            }
+        }
+    ]
+    
+    // カスタムOpenAPIメタデータ
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+            
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes
+        )
+        
+        # カスタムOpenAPI情報
+        openapi_schema["info"]["x-logo"] = {
+            "url": "https://example.com/logo.png"
+        }
+        
+        app.openapi_schema = openapi_schema
+        return app.openapi_schema
+        
+    app.openapi = custom_openapi
+END FUNCTION
+```
+
+## 関連資料
+
+- [FastAPI 公式ドキュメント](https://fastapi.tiangolo.com/)
+- [HTTP ステータスコード](https://developer.mozilla.org/ja/docs/Web/HTTP/Status)
+- [OpenAPI 仕様](https://swagger.io/specification/)
+- [API_DOCUMENTATION.md](https://github.com/yourusername/ai-process-blueprint/blob/main/API_DOCUMENTATION.md)

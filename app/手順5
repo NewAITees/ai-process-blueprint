@@ -1,0 +1,270 @@
+# MCPインターフェースの実装
+
+## 背景
+
+AI Process Blueprintは、AI アシスタントが直接テンプレートにアクセスできるようにするため、Model Context Protocol (MCP) インターフェースを実装する必要があります。MCPはAIアシスタントがツールを呼び出すための標準プロトコルです。
+
+## 目的
+
+- FastMCP を使用したMCPインターフェースを実装する
+- テンプレート管理のための完全なMCPツールセットを提供する
+- AIアシスタントが直接テンプレートを取得・操作できるようにする
+- HTTP APIと同等の機能をMCPインターフェースで提供する
+
+## タスク
+
+1. FastMCPサーバーの設定
+   - `app/mcp/tools.py` にMCPサーバーを設定
+   ```python
+   mcp_server = FastMCP(
+       title="AI Process Blueprint MCP Server",
+       description="テンプレートベースでAIに作業手順を提供するMCPサービス",
+   )
+   ```
+
+2. テンプレート取得ツールの実装
+   ```python
+   @mcp_server.tool()
+   async def get_template(title: str) -> dict:
+       """
+       指定したタイトルのテンプレートを取得します。
+       
+       Args:
+           title: 取得するテンプレートのタイトル
+           
+       Returns:
+           テンプレート情報（タイトル、内容、説明、作成者、日時など）
+           
+       Raises:
+           TemplateNotFoundError: テンプレートが見つからない場合
+       """
+       try:
+           service = get_template_service()
+           template = await service.get_template(title)
+           return template.dict()
+       except TemplateNotFoundError:
+           return {"error": "Template not found", "message": f"Template with title '{title}' does not exist"}
+   ```
+
+3. テンプレート一覧取得ツールの実装
+   ```python
+   @mcp_server.tool()
+   async def list_templates(limit: int = 20, offset: int = 0, username: Optional[str] = None) -> dict:
+       """
+       登録済みのテンプレート一覧を取得します。
+       
+       Args:
+           limit: 取得するテンプレートの最大数（オプション、デフォルト: 20）
+           offset: 結果セットの開始位置（オプション、デフォルト: 0）
+           username: 特定ユーザーのテンプレートのみをフィルタリング（オプション）
+           
+       Returns:
+           テンプレート一覧情報
+       """
+       service = get_template_service()
+       templates = await service.list_templates(limit, offset, username)
+       
+       return {
+           "templates": [t.dict() for t in templates],
+           "total": len(templates),
+           "limit": limit,
+           "offset": offset
+       }
+   ```
+
+4. テンプレート作成ツールの実装
+   ```python
+   @mcp_server.tool()
+   async def register_template(title: str, content: str, description: str = "", username: str = "ai_assistant") -> dict:
+       """
+       新しいテンプレートを登録します。
+       
+       Args:
+           title: テンプレートのタイトル
+           content: Markdown形式のテンプレート内容
+           description: テンプレートの説明（オプション）
+           username: 作成者のユーザー名（オプション、デフォルト: ai_assistant）
+           
+       Returns:
+           作成されたテンプレート情報または作成結果
+           
+       Raises:
+           TemplateAlreadyExistsError: 同じタイトルのテンプレートが既に存在する場合
+       """
+       try:
+           service = get_template_service()
+           template_create = TemplateCreate(
+               title=title,
+               content=content,
+               description=description,
+               username=username
+           )
+           template = await service.create_template(template_create)
+           return template.dict()
+       except TemplateAlreadyExistsError:
+           return {"error": "Template already exists", "message": f"Template with title '{title}' already exists"}
+   ```
+
+5. テンプレート更新ツールの実装
+   ```python
+   @mcp_server.tool()
+   async def update_template(title: str, content: Optional[str] = None, description: Optional[str] = None, username: Optional[str] = None) -> dict:
+       """
+       既存のテンプレートを更新します。
+       
+       Args:
+           title: 更新するテンプレートのタイトル
+           content: 新しいテンプレート内容（オプション）
+           description: 新しい説明（オプション）
+           username: 更新者のユーザー名（オプション）
+           
+       Returns:
+           更新されたテンプレート情報または更新結果
+           
+       Raises:
+           TemplateNotFoundError: テンプレートが見つからない場合
+       """
+       try:
+           service = get_template_service()
+           template_update = TemplateUpdate(
+               content=content,
+               description=description,
+               username=username
+           )
+           template = await service.update_template(title, template_update)
+           return template.dict()
+       except TemplateNotFoundError:
+           return {"error": "Template not found", "message": f"Template with title '{title}' does not exist"}
+   ```
+
+6. テンプレート削除ツールの実装
+   ```python
+   @mcp_server.tool()
+   async def delete_template(title: str) -> dict:
+       """
+       指定したタイトルのテンプレートを削除します。
+       
+       Args:
+           title: 削除するテンプレートのタイトル
+           
+       Returns:
+           削除結果
+           
+       Raises:
+           TemplateNotFoundError: テンプレートが見つからない場合
+       """
+       try:
+           service = get_template_service()
+           success = await service.delete_template(title)
+           
+           if success:
+               return {"status": "success", "message": f"Template '{title}' deleted successfully"}
+           else:
+               return {"status": "error", "message": f"Failed to delete template '{title}'"}
+       except TemplateNotFoundError:
+           return {"error": "Template not found", "message": f"Template with title '{title}' does not exist"}
+   ```
+
+7. サービス依存性の設定
+   ```python
+   def get_template_service() -> TemplateService:
+       repository = FileSystemTemplateRepository(settings.TEMPLATE_DIR)
+       return TemplateService(repository)
+   ```
+
+8. MCP サーバーの統合
+   - FastAPI アプリケーションへのMCPサーバーのマウント
+   ```python
+   app.mount("/mcp", mcp_server.app)
+   ```
+
+9. MCP ツール仕様の自動生成
+   - OpenAPI仕様に準拠したツール定義の生成
+   ```python
+   @app.get("/mcp/tools.json")
+   async def get_mcp_tools():
+       """MCPツール定義を取得します。"""
+       return mcp_server.get_tool_definitions()
+   ```
+
+10. MCP クライアント用のサンプルコードの作成
+    - AIアシスタントからのアクセス例を示すサンプルコード
+    ```python
+    async def ai_assistant_example():
+        """AIアシスタントからのアクセス例"""
+        # テンプレートの取得
+        template = await get_template(title="データ分析レポート")
+        print(f"テンプレート: {template['title']}")
+        print(f"内容: {template['content']}")
+        
+        # テンプレートの登録
+        new_template = await register_template(
+            title="会議議事録作成",
+            content="# 会議議事録\n\n## 日時\n[日付]\n\n## 参加者\n- \n\n## 議題\n1. \n\n## 決定事項\n- ",
+            description="会議の議事録を作成するためのテンプレート",
+            username="ai_assistant"
+        )
+    ```
+
+## 受け入れ基準
+
+- [ ] FastMCPサーバーが正しく設定されている
+- [ ] すべてのMCPツール（一覧表示、取得、作成、更新、削除）が実装されている
+- [ ] 各ツールが適切な引数とレスポンス形式を持っている
+- [ ] エラーハンドリングが適切に実装されている
+- [ ] FastAPIアプリケーションにMCPサーバーが正しくマウントされている
+- [ ] MCPツール定義がOpenAPI仕様に準拠している
+- [ ] AIアシスタントからのアクセスが可能であることが確認できる
+
+## 実装メモ
+
+### MCP ツール設計
+
+| ツール名 | 目的 | 引数 | レスポンス |
+|---------|------|------|----------|
+| `get_template` | 特定テンプレート取得 | title: str | テンプレート情報 |
+| `list_templates` | テンプレート一覧取得 | limit: int, offset: int, username: str | テンプレート一覧情報 |
+| `register_template` | テンプレート作成 | title: str, content: str, description: str, username: str | 作成されたテンプレート情報 |
+| `update_template` | テンプレート更新 | title: str, content: str, description: str, username: str | 更新されたテンプレート情報 |
+| `delete_template` | テンプレート削除 | title: str | 削除結果 |
+
+### ツール利用例の擬似コード
+
+```
+FUNCTION example_ai_assistant_workflow()
+    // テンプレートの取得
+    analysis_template = await get_template("データ分析レポート作成")
+    
+    IF analysis_template.error THEN
+        PRINT "テンプレートが見つかりません。新しく作成します。"
+        
+        // テンプレートの作成
+        analysis_template = await register_template(
+            title="データ分析レポート作成",
+            content="# データ分析レポート\n\n## 1. データセットの理解\n...",
+            description="データ分析プロジェクトのためのレポートテンプレート",
+            username="ai_assistant"
+        )
+    END IF
+    
+    // テンプレートの内容をユーザーに提示
+    PRINT "以下のテンプレートに沿ってデータ分析を進めます:"
+    PRINT analysis_template.content
+    
+    // ユーザーからのフィードバックに基づいてテンプレートを更新
+    updated_template = await update_template(
+        title="データ分析レポート作成",
+        content=analysis_template.content + "\n\n## 5. 追加分析\n- ",
+        username="ai_assistant"
+    )
+    
+    PRINT "テンプレートが更新されました"
+END FUNCTION
+```
+
+## 関連資料
+
+- [FastMCP リポジトリ](https://github.com/ai-forever/fastmcp)
+- [Model Context Protocol 仕様](https://github.com/stanford-crfm/helm/blob/main/src/helm/proxy/clients/mcp.md)
+- [FastAPI 公式ドキュメント](https://fastapi.tiangolo.com/)
+- [API_DOCUMENTATION.md](https://github.com/yourusername/ai-process-blueprint/blob/main/API_DOCUMENTATION.md)

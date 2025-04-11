@@ -1,0 +1,296 @@
+# Dockerfileとデプロイ設定の作成
+
+## 背景
+
+AI Process Blueprintを簡単にデプロイし、一貫した環境で実行できるようにするため、Dockerコンテナ化が必要です。さらに、テンプレートディレクトリをホストとコンテナ間で同期するための適切な設定も必要です。
+
+## 目的
+
+- アプリケーションのDockerコンテナ化
+- テンプレートディレクトリの永続化設定
+- 環境変数の適切な管理
+- 本番環境と開発環境の両方に対応する設定
+
+## タスク
+
+1. Dockerfileの作成
+   - プロジェクトルートディレクトリにDockerfileを作成
+   ```dockerfile
+   # ベースイメージの選択
+   FROM python:3.10-slim
+   
+   # 作業ディレクトリの設定
+   WORKDIR /app
+   
+   # 環境変数の設定
+   ENV PYTHONDONTWRITEBYTECODE=1 \
+       PYTHONUNBUFFERED=1 \
+       PORT=8080 \
+       TEMPLATE_DIR=/app/templates
+   
+   # 依存関係ファイルのコピーとインストール
+   COPY requirements.txt .
+   RUN pip install --no-cache-dir -r requirements.txt
+   
+   # アプリケーションコードのコピー
+   COPY . .
+   
+   # テンプレートディレクトリの作成
+   RUN mkdir -p /app/templates
+   
+   # エントリーポイントの設定
+   CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT:-8080}"]
+   ```
+
+2. .dockerignoreファイルの作成
+   - 不要なファイルがコンテナに含まれないようにする
+   ```
+   .git
+   .github
+   .gitignore
+   .env
+   .venv
+   __pycache__/
+   *.py[cod]
+   *$py.class
+   *.so
+   .Python
+   env/
+   build/
+   develop-eggs/
+   dist/
+   downloads/
+   eggs/
+   .eggs/
+   lib/
+   lib64/
+   parts/
+   sdist/
+   var/
+   *.egg-info/
+   .installed.cfg
+   *.egg
+   .pytest_cache/
+   .coverage
+   htmlcov/
+   .vscode/
+   .idea/
+   ```
+
+3. docker-compose.ymlの作成
+   - 開発環境用のDocker Compose設定
+   ```yaml
+   version: '3.8'
+   
+   services:
+     app:
+       build: .
+       ports:
+         - "${PORT:-8080}:${PORT:-8080}"
+       volumes:
+         - ./templates:/app/templates
+       environment:
+         - PORT=${PORT:-8080}
+         - TEMPLATE_DIR=/app/templates
+         - DEBUG=${DEBUG:-false}
+         - LOG_LEVEL=${LOG_LEVEL:-info}
+         - ENABLE_MCP=${ENABLE_MCP:-true}
+         - ENABLE_HTTP=${ENABLE_HTTP:-true}
+   ```
+
+4. 本番環境用docker-compose.prod.ymlの作成
+   ```yaml
+   version: '3.8'
+   
+   services:
+     app:
+       image: ai-process-blueprint:latest
+       restart: always
+       ports:
+         - "${PORT:-8080}:${PORT:-8080}"
+       volumes:
+         - blueprint_templates:/app/templates
+       environment:
+         - PORT=${PORT:-8080}
+         - TEMPLATE_DIR=/app/templates
+         - DEBUG=false
+         - LOG_LEVEL=${LOG_LEVEL:-info}
+         - ENABLE_MCP=${ENABLE_MCP:-true}
+         - ENABLE_HTTP=${ENABLE_HTTP:-true}
+   
+   volumes:
+     blueprint_templates:
+       driver: local
+   ```
+
+5. ビルドとデプロイスクリプトの作成
+   - `scripts/build.sh` スクリプトの作成
+   ```bash
+   #!/bin/bash
+   
+   # Dockerイメージのビルド
+   docker build -t ai-process-blueprint:latest .
+   ```
+   
+   - `scripts/run.sh` スクリプトの作成
+   ```bash
+   #!/bin/bash
+   
+   # 開発環境での実行
+   docker-compose up -d
+   ```
+   
+   - `scripts/run_prod.sh` スクリプトの作成
+   ```bash
+   #!/bin/bash
+   
+   # 本番環境での実行
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+6. 環境変数のサンプルファイル（.env.example）の更新
+   ```
+   # アプリケーション設定
+   PORT=8080
+   TEMPLATE_DIR=/app/templates
+   LOG_LEVEL=info
+   ENABLE_MCP=true
+   ENABLE_HTTP=true
+   
+   # 開発設定
+   DEBUG=false
+   ```
+
+7. ヘルスチェックエンドポイントの追加
+   - `app/main.py` にヘルスチェックエンドポイントを追加
+   ```python
+   @app.get("/health")
+   async def health_check():
+       """ヘルスチェックエンドポイント"""
+       return {
+           "status": "healthy",
+           "timestamp": datetime.now().isoformat(),
+           "version": settings.VERSION
+       }
+   ```
+
+8. ロギング設定の調整
+   - `app/config.py` にロギング設定を追加
+   ```python
+   def setup_logging():
+       """アプリケーションのロギング設定を行います"""
+       log_level = getattr(logging, settings.LOG_LEVEL.upper())
+       
+       logging.basicConfig(
+           level=log_level,
+           format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+       )
+       
+       # ライブラリの過剰なログを抑制
+       logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+   ```
+
+9. Dockerイメージサイズの最適化
+   - マルチステージビルドの検討
+   - 不要なパッケージの除外
+   ```dockerfile
+   # マルチステージビルドの例
+   FROM python:3.10-slim AS builder
+   
+   WORKDIR /app
+   
+   COPY requirements.txt .
+   RUN pip install --no-cache-dir --user -r requirements.txt
+   
+   FROM python:3.10-slim
+   
+   WORKDIR /app
+   
+   COPY --from=builder /root/.local /root/.local
+   ENV PATH=/root/.local/bin:$PATH
+   
+   COPY . .
+   
+   CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT:-8080}"]
+   ```
+
+10. Dockerボリュームの権限設定
+    - テンプレートディレクトリの権限設定を追加
+    ```dockerfile
+    # テンプレートディレクトリの作成と権限設定
+    RUN mkdir -p /app/templates && \
+        chmod 755 /app/templates
+    ```
+
+## 受け入れ基準
+
+- [ ] Dockerfileがプロジェクトルートに存在し、ビルド可能である
+- [ ] docker-compose.ymlとdocker-compose.prod.ymlが正しく設定されている
+- [ ] テンプレートディレクトリがホストとコンテナ間で正しく同期される
+- [ ] ビルドおよび実行スクリプトが正常に動作する
+- [ ] 環境変数が適切に設定され、アプリケーションで使用される
+- [ ] ヘルスチェックエンドポイントが動作する
+- [ ] ログが適切に出力される
+- [ ] Dockerイメージのサイズが最適化されている
+
+## 実装メモ
+
+### Docker ベストプラクティス
+
+1. **軽量イメージの使用**:
+   - Alpine ベースや slim バリアントを使用
+   - 不要なパッケージやキャッシュを削除
+
+2. **レイヤーの最小化**:
+   - 関連するコマンドを結合し、レイヤー数を減らす
+   - キャッシュ最適化のために依存関係とコードを分離
+
+3. **セキュリティ対策**:
+   - 非rootユーザーの使用
+   - 最小限の権限設定
+   - セキュリティスキャンの実施
+
+### ボリューム設定の擬似コード
+
+```
+FUNCTION setup_template_directory(container_path, host_path)
+    // コンテナ内のディレクトリを作成
+    mkdir -p container_path
+    
+    // 権限を設定
+    chmod 755 container_path
+    
+    // ボリュームマウントの設定
+    volume_options = {
+        "type": "bind",
+        "source": host_path,
+        "target": container_path
+    }
+    
+    RETURN volume_options
+END FUNCTION
+
+FUNCTION validate_template_directory(dir_path)
+    // ディレクトリの存在確認
+    IF NOT directory_exists(dir_path) THEN
+        log.warning("テンプレートディレクトリが存在しません。作成します。")
+        mkdir -p dir_path
+    END IF
+    
+    // 書き込み権限の確認
+    IF NOT is_writeable(dir_path) THEN
+        log.error("テンプレートディレクトリに書き込み権限がありません。")
+        EXIT 1
+    END IF
+    
+    log.info("テンプレートディレクトリの検証が完了しました。")
+END FUNCTION
+```
+
+## 関連資料
+
+- [Docker 公式ドキュメント](https://docs.docker.com/)
+- [Docker Compose 公式ドキュメント](https://docs.docker.com/compose/)
+- [FastAPI のデプロイガイド](https://fastapi.tiangolo.com/deployment/)
+- [Docker ボリュームの詳細](https://docs.docker.com/storage/volumes/)
+- [DEVELOPMENT_SETUP.md](https://github.com/yourusername/ai-process-blueprint/blob/main/DEVELOPMENT_SETUP.md)

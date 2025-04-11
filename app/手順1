@@ -1,0 +1,107 @@
+# 基本プロジェクト構造のセットアップ
+
+## 背景
+
+AI Process Blueprint プロジェクトを始めるにあたり、適切なプロジェクト構造とベースとなる環境設定が必要です。このイシューでは、開発を効率的に進めるための基本的なプロジェクト構造を設定します。
+
+## 目的
+
+- プロジェクトの基本構造とフォルダ階層を設定する
+- 開発環境の設定ファイルを作成する
+- 依存関係を定義する
+- 基本的な設定を行う
+
+## タスク
+
+1. プロジェクトのフォルダ構造を以下のように作成：
+   ```
+   ai-process-blueprint/
+   ├── app/
+   │   ├── api/
+   │   │   ├── __init__.py
+   │   │   └── routes.py
+   │   ├── mcp/
+   │   │   ├── __init__.py
+   │   │   └── tools.py
+   │   ├── core/
+   │   │   ├── __init__.py
+   │   │   └── services.py
+   │   ├── data/
+   │   │   ├── __init__.py
+   │   │   └── repository.py
+   │   ├── schemas/
+   │   │   ├── __init__.py
+   │   │   └── models.py
+   │   ├── __init__.py
+   │   ├── config.py
+   │   └── main.py
+   ├── templates/
+   │   └── README.md
+   ├── tests/
+   │   ├── __init__.py
+   │   ├── conftest.py
+   │   └── test_template_service.py
+   ├── .env.example
+   ├── .gitignore
+   ├── pyproject.toml または requirements.txt
+   ├── README.md
+   └── run.py
+   ```
+
+2. 環境変数の設定
+   - `.env.example` ファイルに以下の設定を含める：
+     ```
+     # アプリケーション設定
+     PORT=8080
+     TEMPLATE_DIR=./templates
+     LOG_LEVEL=info
+     ENABLE_MCP=true
+     ENABLE_HTTP=true
+     
+     # 開発設定
+     DEBUG=true
+     ```
+
+3. 依存関係の定義
+   - `requirements.txt` または `pyproject.toml` に以下のパッケージを含める：
+     - fastapi>=0.103.0
+     - fastmcp>=0.4.0
+     - fastapi_mcp>=0.3.0
+     - pydantic>=2.0.0
+     - uvicorn>=0.23.0
+     - python-dotenv>=1.0.0
+     - pyyaml>=6.0
+     - pytest>=7.0.0（開発用）
+     - httpx>=0.24.0（テスト用）
+
+4. 基本的な設定ファイル
+   - `app/config.py` に設定読み込み機能を実装
+   - 環境変数から設定を読み込み、デフォルト値も設定
+
+5. メインアプリケーションの骨格
+   - `app/main.py` にFastAPIとFastMCPアプリケーションの基本構造を実装
+   - `run.py` に起動スクリプトを実装
+
+6. テンプレートディレクトリの準備
+   - `templates/README.md` にテンプレート保存形式についての説明を記載
+
+7. テスト環境のセットアップ
+   - `tests/conftest.py` にテスト用のフィクスチャを準備
+   - サンプルテストケースを `tests/test_template_service.py` に作成
+
+## 受け入れ基準
+
+- [ ] プロジェクトのフォルダ構造が上記のように作成されている
+- [ ] `.env.example` が適切に設定されている
+- [ ] 依存関係ファイルが作成され、必要なパッケージが含まれている
+- [ ] `app/config.py` が環境変数を読み込める
+- [ ] `app/main.py` が基本的なFastAPIアプリケーションを定義している
+- [ ] `run.py` からアプリケーションが起動できる
+- [ ] `pytest` でサンプルテストが実行できる
+
+## 関連資料
+
+- [FastAPI 公式ドキュメント](https://fastapi.tiangolo.com/)
+- [FastMCP リポジトリ](https://github.com/ai-forever/fastmcp)
+- [PRD.md](https://github.com/yourusername/ai-process-blueprint/blob/main/PRD.md)
+- [ARCHITECTURE.md](https://github.com/yourusername/ai-process-blueprint/blob/main/ARCHITECTURE.md)

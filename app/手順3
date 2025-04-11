@@ -1,0 +1,191 @@
+# ファイルシステムベースのリポジトリ実装
+
+## 背景
+
+AI Process Blueprint はテンプレートをファイルシステム上のMarkdownファイルとして保存します。このイシューではテンプレートデータの永続化と取得を担当するリポジトリレイヤーを実装します。
+
+## 目的
+
+- ファイルシステムを使用したテンプレートの永続化機能を実装する
+- コアサービスとファイルシステムの間の抽象化レイヤーを提供する
+- テンプレートのCRUD操作をファイルシステム操作に変換する
+
+## タスク
+
+1. テンプレートリポジトリインターフェースの定義
+   - `app/data/repository.py` にリポジトリのインターフェースを実装
+   ```python
+   class TemplateRepository(ABC):
+       @abstractmethod
+       async def create(self, template: TemplateCreate) -> Template:
+           pass
+       
+       @abstractmethod
+       async def get(self, title: str) -> Template:
+           pass
+       
+       @abstractmethod
+       async def update(self, title: str, template_update: TemplateUpdate) -> Template:
+           pass
+       
+       @abstractmethod
+       async def delete(self, title: str) -> bool:
+           pass
+       
+       @abstractmethod
+       async def list(self, limit: int = 20, offset: int = 0, username: Optional[str] = None) -> List[Template]:
+           pass
+   ```
+
+2. ファイルシステムリポジトリの実装
+   - `app/data/repository.py` に `FileSystemTemplateRepository` クラスを実装
+   ```python
+   class FileSystemTemplateRepository(TemplateRepository):
+       def __init__(self, templates_dir: str):
+           self.templates_dir = templates_dir
+           os.makedirs(templates_dir, exist_ok=True)
+       
+       # 抽象メソッドの実装...
+   ```
+
+3. テンプレートファイル名の管理
+   - タイトルをファイル名に変換するロジック
+   - ファイル名からタイトルを抽出するロジック
+   - ファイル名の衝突を防ぐ仕組み
+   - 特殊文字の処理（ファイルシステム互換性の確保）
+   ```python
+   def _title_to_filename(self, title: str) -> str:
+       # 特殊文字を置換し、有効なファイル名に変換
+       # 例: "My Template: Version 1.0" → "my_template_version_1_0.md"
+   
+   def _filename_to_title(self, filename: str) -> str:
+       # ファイル名からタイトルを復元（必要に応じて）
+   ```
+
+4. ファイル読み書き操作の実装
+   - 非同期I/Oを使用してファイルを読み書き
+   - YAML フロントマターの処理（コアサービスと連携）
+   ```python
+   async def _read_template_file(self, filename: str) -> Template:
+       # ファイルを読み込み、Templateオブジェクトに変換
+   
+   async def _write_template_file(self, template: Template, filename: str) -> None:
+       # Templateオブジェクトをファイルに書き込み
+   ```
+
+5. 一覧取得とフィルタリングの実装
+   - ディレクトリ内のテンプレートファイルを一覧
+   - 指定条件でのフィルタリング
+   - ページネーション処理
+   ```python
+   async def list(self, limit: int = 20, offset: int = 0, username: Optional[str] = None) -> List[Template]:
+       templates = []
+       # ディレクトリ内のすべての.mdファイルを処理
+       # フロントマターを読み込み、指定条件でフィルタリング
+       # limit/offsetによるページネーション
+   ```
+
+6. 並行アクセス制御の実装
+   - 同時書き込みによるデータ破損を防ぐロック機構
+   - 一時ファイルを使用した安全な更新処理
+   ```python
+   async def _safe_write(self, filename: str, content: str) -> None:
+       # 一時ファイルに書き込み後、アトミックに名前変更
+   ```
+
+7. エラーハンドリングの実装
+   - ファイルが見つからない場合の処理
+   - ファイルシステム操作失敗時の処理
+   - 破損ファイルの処理
+   - カスタム例外の定義と発生
+   ```python
+   class TemplateNotFoundError(Exception):
+       # テンプレートが見つからない場合の例外
+   
+   class TemplateIOError(Exception):
+       # ファイルI/O操作が失敗した場合の例外
+   ```
+
+## 受け入れ基準
+
+- [ ] `FileSystemTemplateRepository` がリポジトリインターフェースをすべて実装している
+- [ ] テンプレートの作成・取得・更新・削除が正しく動作する
+- [ ] テンプレートファイルがYAMLフロントマターを含む正しい形式で保存される
+- [ ] 特殊文字を含むタイトルが適切に処理される
+- [ ] ファイル名とタイトルの変換が正しく動作する
+- [ ] テンプレート一覧取得とフィルタリングが正しく機能する
+- [ ] 並行アクセスが安全に処理される
+- [ ] エラー状況が適切に処理され、明確な例外が発生する
+
+## 実装メモ
+
+### ファイルシステム操作の擬似コード
+
+```
+FUNCTION create(template)
+    // タイトルからファイル名を生成
+    filename = title_to_filename(template.title)
+    file_path = join_path(templates_dir, filename)
+    
+    // 既存ファイルの確認
+    IF file_exists(file_path) THEN
+        THROW TemplateAlreadyExistsError
+    END IF
+    
+    // タイムスタンプの設定
+    now = current_time()
+    template.created_at = now
+    template.updated_at = now
+    
+    // テンプレートを保存
+    await write_template_file(template, file_path)
+    
+    RETURN template
+END FUNCTION
+
+FUNCTION get(title)
+    // タイトルからファイル名を生成
+    filename = title_to_filename(title)
+    file_path = join_path(templates_dir, filename)
+    
+    // ファイルの存在確認
+    IF NOT file_exists(file_path) THEN
+        THROW TemplateNotFoundError
+    END IF
+    
+    // ファイルを読み込み、Templateオブジェクトに変換
+    return await read_template_file(file_path)
+END FUNCTION
+
+FUNCTION list(limit, offset, username)
+    templates = []
+    filenames = list_files(templates_dir, "*.md")
+    
+    FOR EACH filename IN filenames
+        file_path = join_path(templates_dir, filename)
+        template = await read_template_file(file_path)
+        
+        // usernameが指定されている場合はフィルタリング
+        IF username is None OR template.username == username THEN
+            APPEND template TO templates
+        END IF
+    END FOR
+    
+    // 結果をソート（例：更新日時の降順）
+    templates = sort_by(templates, "updated_at", "desc")
+    
+    // ページネーション処理
+    start_index = offset
+    end_index = min(offset + limit, templates.length)
+    
+    RETURN templates[start_index:end_index]
+END FUNCTION
+```
+
+## 関連資料
+
+- [Python ファイルシステム操作ドキュメント](https://docs.python.org/3/library/os.path.html)
+- [PyYAML ドキュメント](https://pyyaml.org/wiki/PyYAMLDocumentation)
+- [aiofiles - 非同期ファイルI/Oライブラリ](https://github.com/Tinche/aiofiles)
+- [PRD.md](https://github.com/yourusername/ai-process-blueprint/blob/main/PRD.md)
+- [ARCHITECTURE.md](https://github.com/yourusername/ai-process-blueprint/blob/main/ARCHITECTURE.md)

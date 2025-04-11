@@ -1,0 +1,156 @@
+# テンプレート管理のコアサービス実装
+
+## 背景
+
+AI Process Blueprint の中核機能として、テンプレートの管理機能が必要です。テンプレートは Markdown ファイルとして保存され、YAML フロントマターにメタデータを含みます。コアサービスはテンプレートの作成・取得・更新・削除といった基本操作を提供します。
+
+## 目的
+
+- テンプレート管理の中核ビジネスロジックを実装する
+- テンプレートモデルとスキーマを定義する
+- ビジネスロジックとデータアクセス層の間のインターフェースを定義する
+
+## タスク
+
+1. テンプレートモデルの定義
+   - `app/schemas/models.py` にテンプレートのPydanticモデルを実装
+   ```python
+   class TemplateBase(BaseModel):
+       title: str
+       content: str
+       description: str = ""
+       username: str = "anonymous"
+   
+   class TemplateCreate(TemplateBase):
+       pass
+   
+   class TemplateUpdate(BaseModel):
+       content: Optional[str] = None
+       description: Optional[str] = None
+       username: Optional[str] = None
+   
+   class Template(TemplateBase):
+       created_at: datetime
+       updated_at: datetime
+       
+       class Config:
+           from_attributes = True
+   ```
+
+2. テンプレートサービスインターフェースの定義
+   - `app/core/services.py` にサービスインターフェースを実装
+   ```python
+   class TemplateService:
+       def __init__(self, repository: TemplateRepository):
+           self.repository = repository
+       
+       async def create_template(self, template: TemplateCreate) -> Template:
+           # 実装
+       
+       async def get_template(self, title: str) -> Template:
+           # 実装
+       
+       async def update_template(self, title: str, template_update: TemplateUpdate) -> Template:
+           # 実装
+       
+       async def delete_template(self, title: str) -> bool:
+           # 実装
+       
+       async def list_templates(self, limit: int = 20, offset: int = 0, username: Optional[str] = None) -> List[Template]:
+           # 実装
+   ```
+
+3. YAML フロントマター処理の実装
+   - Markdown ファイルから YAML フロントマターを抽出する機能
+   - フロントマターとコンテンツを分離する機能
+   - フロントマターを Template モデルに変換する機能
+
+4. ファイル名とテンプレートタイトルの変換ロジック
+   - タイトルをファイル名に変換する機能（特殊文字の処理など）
+   - ファイル名からタイトルに戻す機能
+
+5. バリデーションロジックの実装
+   - テンプレートタイトルの一意性チェック
+   - 不正な文字や形式のチェック
+   - 最大サイズ制限の実装
+
+6. エラー処理の実装
+   - テンプレートが見つからない場合の例外
+   - テンプレートがすでに存在する場合の例外
+   - ファイルシステムエラーの処理
+
+7. 日時処理の実装
+   - 作成日時・更新日時の自動設定
+   - 日時形式の標準化（ISO 8601）
+
+## 受け入れ基準
+
+- [ ] テンプレートモデルが適切に定義されている
+- [ ] テンプレートサービスのすべてのメソッドが実装されている
+- [ ] YAML フロントマターの処理が正しく動作する
+- [ ] テンプレートのバリデーションが正しく動作する
+- [ ] エラー処理が適切に実装されている
+- [ ] 作成日時・更新日時が自動的に設定される
+- [ ] すべての操作がファイルシステムに正しく反映される
+
+## 実装メモ
+
+### YAML フロントマター処理の擬似コード
+
+```
+FUNCTION parse_template_file(file_path)
+    // ファイルの内容を読み込み
+    content = read_file(file_path)
+    
+    // フロントマターとMarkdownコンテンツを分離
+    IF content.startswith("---")
+        // フロントマターの終わりを見つける
+        frontmatter_end = content.find("---", 3)
+        IF frontmatter_end > 0
+            frontmatter = content[3:frontmatter_end].strip()
+            markdown_content = content[frontmatter_end+3:].strip()
+            
+            // YAMLとしてフロントマターをパース
+            metadata = parse_yaml(frontmatter)
+            
+            RETURN {
+                "metadata": metadata,
+                "content": markdown_content
+            }
+        END IF
+    END IF
+    
+    // フロントマターがない場合はコンテンツのみ返す
+    RETURN {
+        "metadata": {},
+        "content": content
+    }
+END FUNCTION
+
+FUNCTION save_template_file(file_path, template)
+    // メタデータとコンテンツを分離
+    metadata = {
+        "title": template.title,
+        "description": template.description,
+        "username": template.username,
+        "created_at": template.created_at.isoformat(),
+        "updated_at": template.updated_at.isoformat()
+    }
+    
+    // メタデータをYAMLに変換
+    yaml_frontmatter = convert_to_yaml(metadata)
+    
+    // フロントマッターとコンテンツを結合
+    file_content = f"---\n{yaml_frontmatter}\n---\n\n{template.content}"
+    
+    // ファイルに書き込み
+    write_file(file_path, file_content)
+END FUNCTION
+```
+
+## 関連資料
+
+- [Pydantic ドキュメント](https://docs.pydantic.dev/)
+- [Python YAML ドキュメント](https://pyyaml.org/wiki/PyYAMLDocumentation)
+- [PRD.md](https://github.com/yourusername/ai-process-blueprint/blob/main/PRD.md)
+- [ARCHITECTURE.md](https://github.com/yourusername/ai-process-blueprint/blob/main/ARCHITECTURE.md)
