@@ -66,7 +66,7 @@ AI Process Blueprint プロジェクトを始めるにあたり、適切なプ�
    - `requirements.txt` または `pyproject.toml` に以下のパッケージを含める：
      - fastapi>=0.103.0
      - fastmcp>=0.4.0
-     - fastapi_mcp>=0.3.0
+     - fastapi_mcp>=0.2.0
      - pydantic>=2.0.0
      - uvicorn>=0.23.0
      - python-dotenv>=1.0.0

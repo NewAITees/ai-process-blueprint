@@ -14,7 +14,7 @@
 まず、Gitリポジトリをローカル環境にクローンします。
 
 ```bash
-git clone https://github.com/yourusername/ai-process-blueprint.git
+git clone https://github.com/NewAITees/ai-process-blueprint.git
 cd ai-process-blueprint
 ```
 
@@ -24,16 +24,13 @@ cd ai-process-blueprint
 
 ```bash
 # 仮想環境を作成
-python -m venv .venv
+poetry install
 
 # 仮想環境を有効化
 # Windows
-.venv\Scripts\activate
 # macOS / Linux
-source .venv/bin/activate
 
 # 依存関係をインストール
-pip install -r requirements.txt
 ```
 
 ### 2.2 Poetry を使う方法（推奨）
