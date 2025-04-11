@@ -28,5 +28,3 @@ var/
 htmlcov/
 .vscode/
 .idea/
-poetry.lock
-pyproject.toml 

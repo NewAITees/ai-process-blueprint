@@ -11,9 +11,10 @@ services:
       - ./test-results:/app/test-results
     environment:
       - PYTHONPATH=/app
+      - POETRY_VIRTUALENVS_CREATE=false
       - PYTEST_ADDOPTS="--junitxml=/app/test-results/junit.xml"
     # テスト終了後にコンテナを削除
     command: >
       sh -c "
-        pytest tests/ -v --cov=app --cov-report=html --cov-report=term-missing --junitxml=/app/test-results/junit.xml
+        poetry run pytest tests/ -v --cov=app --cov-report=html --cov-report=term-missing --junitxml=/app/test-results/junit.xml
       " 

@@ -79,7 +79,7 @@ class FileSystemTemplateRepository(TemplateRepository):
         normalized = unicodedata.normalize('NFKC', filename)
         # 無効な文字や区切り文字をアンダースコアに置換
         # (POSIXファイルシステムの一般的な制限に基づく)
-        sanitized = re.sub(r'[\\s<>:"/\\\\|?*.,;!#%=+~']+', '_', normalized)
+        sanitized = re.sub(r'[\s<>:"/\\|?*.,;!#%=+~\']+', '_', normalized)
         # 先頭と末尾のアンダースコアやドットを削除
         sanitized = sanitized.strip('_.')
         # 連続するアンダースコアを1つにまとめる
