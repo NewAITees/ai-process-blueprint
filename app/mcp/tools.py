@@ -40,14 +40,18 @@ mcp_server = FastMCP(
 
 # --- MCP ツール定義 --- #
 
+def get_service():
+    """Helper to get template service instance without FastAPI dependency injection"""
+    repo = FileSystemTemplateRepository(settings.template_dir)
+    return TemplateService(repo)
+
 @mcp_server.tool()
-async def get_template(title: str, service: TemplateService = Depends(get_template_service)) -> Dict[str, Any]:
+async def get_template(title: str) -> Dict[str, Any]:
     """
     Retrieves a template by its unique title.
 
     Args:
         title (str): The title of the template to retrieve.
-        service (TemplateService): Injected template service instance.
 
     Returns:
         Dict[str, Any]: A dictionary containing the template data if found,
@@ -59,6 +63,7 @@ async def get_template(title: str, service: TemplateService = Depends(get_templa
         Does not raise exceptions directly to the MCP client, returns error dictionary instead.
     """
     logger.info(f"[MCP] Received request to get template: {title}")
+    service = get_service()
     try:
         template = await service.get_template(title)
         # Pydanticモデルを辞書に変換して返す
@@ -79,8 +84,7 @@ async def get_template(title: str, service: TemplateService = Depends(get_templa
 async def list_templates(
     limit: int = 20,
     offset: int = 0,
-    username: Optional[str] = None,
-    service: TemplateService = Depends(get_template_service)
+    username: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Lists registered templates with pagination and optional filtering by username.
@@ -89,7 +93,6 @@ async def list_templates(
         limit (int): Maximum number of templates to return (default: 20, max: 100).
         offset (int): Number of templates to skip (default: 0).
         username (Optional[str]): Filter templates by this username if provided.
-        service (TemplateService): Injected template service instance.
 
     Returns:
         Dict[str, Any]: A dictionary containing a list of templates and pagination info,
@@ -98,6 +101,8 @@ async def list_templates(
                       Example error: {"error": "Internal Server Error", "message": "..."}
     """
     logger.info(f"[MCP] Received request to list templates: limit={limit}, offset={offset}, username={username}")
+    service = get_service()
+    
     # 引数のバリデーション (FastAPIのQueryのような機能はないため手動で)
     if not (1 <= limit <= 100):
         limit = 20 # 不正な値はデフォルト値にフォールバック
@@ -130,8 +135,7 @@ async def register_template(
     title: str,
     content: str,
     description: str = "",
-    username: str = "ai_assistant",
-    service: TemplateService = Depends(get_template_service)
+    username: str = "ai_assistant"
 ) -> Dict[str, Any]:
     """
     Registers a new template.
@@ -141,7 +145,6 @@ async def register_template(
         content (str): The Markdown content of the template.
         description (str): An optional description for the template (default: "").
         username (str): The username of the creator (default: "ai_assistant").
-        service (TemplateService): Injected template service instance.
 
     Returns:
         Dict[str, Any]: A dictionary containing the created template data if successful,
@@ -150,6 +153,7 @@ async def register_template(
                       Example error: {"error": "Template already exists", "message": "..."}
     """
     logger.info(f"[MCP] Received request to register template: {title}")
+    service = get_service()
     try:
         template_create = TemplateCreate(
             title=title,
@@ -179,8 +183,7 @@ async def update_template(
     title: str,
     content: Optional[str] = None,
     description: Optional[str] = None,
-    username: Optional[str] = None, # 更新者名を指定可能に
-    service: TemplateService = Depends(get_template_service)
+    username: Optional[str] = None # 更新者名を指定可能に
 ) -> Dict[str, Any]:
     """
     Updates an existing template. Only provided fields (content, description, username) are updated.
@@ -190,7 +193,6 @@ async def update_template(
         content (Optional[str]): The new Markdown content (if updating).
         description (Optional[str]): The new description (if updating).
         username (Optional[str]): The username of the updater (if updating).
-        service (TemplateService): Injected template service instance.
 
     Returns:
         Dict[str, Any]: A dictionary containing the updated template data if successful,
@@ -199,6 +201,8 @@ async def update_template(
                       Example error: {"error": "Template not found", "message": "..."}
     """
     logger.info(f"[MCP] Received request to update template: {title}")
+    service = get_service()
+    
     if content is None and description is None and username is None:
         logger.warning(f"[MCP] Update request for '{title}' received no fields to update.")
         return {"error": "Validation Error", "message": "No fields provided to update."}
@@ -227,13 +231,12 @@ async def update_template(
 
 
 @mcp_server.tool()
-async def delete_template(title: str, service: TemplateService = Depends(get_template_service)) -> Dict[str, Any]:
+async def delete_template(title: str) -> Dict[str, Any]:
     """
     Deletes a template by its title.
 
     Args:
         title (str): The title of the template to delete.
-        service (TemplateService): Injected template service instance.
 
     Returns:
         Dict[str, Any]: A dictionary indicating success or failure.
@@ -241,6 +244,7 @@ async def delete_template(title: str, service: TemplateService = Depends(get_tem
                       Example error: {"error": "Template not found", "message": "..."}
     """
     logger.info(f"[MCP] Received request to delete template: {title}")
+    service = get_service()
     try:
         success = await service.delete_template(title)
         if success:
@@ -250,6 +254,15 @@ async def delete_template(title: str, service: TemplateService = Depends(get_tem
             # このケースは通常発生しないはず (エラーは例外で捕捉される)
             logger.error(f"[MCP] delete_template for '{title}' returned False unexpectedly.")
             return {"status": "error", "message": f"Failed to delete template '{title}' for an unknown reason."}
+    except TemplateNotFoundError as e:
+        logger.warning(f"[MCP] Template not found for deletion: {title} - {e}")
+        return {"error": "Template not found", "message": str(e)}
+    except (TemplateIOError, TemplateServiceError) as e:
+        logger.error(f"[MCP] Error deleting template '{title}': {e}", exc_info=True)
+        return {"error": "Internal Server Error", "message": f"An internal error occurred: {e}"}
+    except Exception as e:
+        logger.error(f"[MCP] Unexpected error deleting template '{title}': {e}", exc_info=True)
+        return {"error": "Unexpected Error", "message": f"An unexpected error occurred: {e}"}
     except TemplateNotFoundError as e:
         logger.warning(f"[MCP] Template not found for deletion: {title} - {e}")
         return {"error": "Template not found", "message": str(e)}
