@@ -35,7 +35,8 @@ logger = logging.getLogger(__name__)
 mcp_server = FastMCP(
     title="AI Process Blueprint MCP Server",
     description="MCP service for managing AI process templates.",
-    version="1.0.0"
+    version="1.0.0",
+    log_level="INFO"  # 注意: ログレベルは大文字で指定する必要がある
 )
 
 # --- MCP ツール定義 --- #
@@ -254,15 +255,6 @@ async def delete_template(title: str) -> Dict[str, Any]:
             # このケースは通常発生しないはず (エラーは例外で捕捉される)
             logger.error(f"[MCP] delete_template for '{title}' returned False unexpectedly.")
             return {"status": "error", "message": f"Failed to delete template '{title}' for an unknown reason."}
-    except TemplateNotFoundError as e:
-        logger.warning(f"[MCP] Template not found for deletion: {title} - {e}")
-        return {"error": "Template not found", "message": str(e)}
-    except (TemplateIOError, TemplateServiceError) as e:
-        logger.error(f"[MCP] Error deleting template '{title}': {e}", exc_info=True)
-        return {"error": "Internal Server Error", "message": f"An internal error occurred: {e}"}
-    except Exception as e:
-        logger.error(f"[MCP] Unexpected error deleting template '{title}': {e}", exc_info=True)
-        return {"error": "Unexpected Error", "message": f"An unexpected error occurred: {e}"}
     except TemplateNotFoundError as e:
         logger.warning(f"[MCP] Template not found for deletion: {title} - {e}")
         return {"error": "Template not found", "message": str(e)}

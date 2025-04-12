@@ -39,6 +39,19 @@ class Settings(BaseSettings):
 # Create a global settings instance
 settings = Settings()
 
+# テンプレートディレクトリの修正（Docker連携のため最適化）
+if str(settings.template_dir) == "/templates":
+    # プロジェクトルートディレクトリを取得
+    current_file = Path(__file__)
+    project_root = current_file.parent.parent.parent  # app/config.py から3階層上
+    
+    # プロジェクトルート直下のtemplatesディレクトリを使用
+    settings.template_dir = project_root / "templates"
+    
+    # ディレクトリが存在しない場合は作成
+    os.makedirs(settings.template_dir, exist_ok=True)
+    print(f"Template directory set to: {settings.template_dir}")
+
 def setup_logging():
     """アプリケーションのロギング設定を行います"""
     log_level = getattr(logging, settings.log_level.upper(), logging.INFO)

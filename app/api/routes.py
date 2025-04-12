@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def get_template_repository() -> TemplateRepository:
     """Dependency injector for the template repository."""
     # 設定からテンプレートディレクトリを取得
-    return FileSystemTemplateRepository(settings.TEMPLATE_DIR)
+    return FileSystemTemplateRepository(settings.template_dir)
 
 def get_template_service(
     repository: TemplateRepository = Depends(get_template_repository)
