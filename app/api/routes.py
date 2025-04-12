@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from app.schemas.models import Template, TemplateCreate, TemplateUpdate
 from app.core.services import (
@@ -93,16 +94,21 @@ async def get_template(
          logger.error(f"Error retrieving template '{title}': {e}", exc_info=True)
          raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal error occurred while retrieving the template.")
 
-# リスト取得用のレスポンスモデル (手順書記載のものを拡張)
+# リスト取得用のレスポンスモデル
 class TemplateListResponse(BaseModel):
+    """Response model for listing templates."""
     templates: List[Template]
-    total: int # 全体の件数 (フィルタリング後)
+    total: int  # 全体の件数 (フィルタリング後)
     limit: int
     offset: int
 
+    model_config = {
+        "from_attributes": True  # Pydantic V2
+    }
+
 @template_router.get(
     "/",
-    response_model=TemplateListResponse, # 変更: リスト用のレスポンスモデルを使用
+    response_model=TemplateListResponse,
     summary="List templates",
     description="Retrieves a list of templates, with options for pagination and filtering by username."
 )

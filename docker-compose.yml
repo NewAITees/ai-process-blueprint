@@ -14,4 +14,10 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - ENABLE_MCP=${ENABLE_MCP:-true}
       - ENABLE_HTTP=${ENABLE_HTTP:-true}
-    restart: unless-stopped 
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s 

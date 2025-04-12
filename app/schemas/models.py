@@ -25,7 +25,7 @@ class Template(TemplateBase):
     created_at: datetime = Field(..., description="Timestamp when the template was created")
     updated_at: datetime = Field(..., description="Timestamp when the template was last updated")
 
-    class Config:
-        """Pydantic configuration for ORM mode (compatibility with data layer)."""
-        from_attributes = True # Pydantic V2 (旧 orm_mode)
+    model_config = {
+        "from_attributes": True  # Pydantic V2 (旧 orm_mode)
+    }
 

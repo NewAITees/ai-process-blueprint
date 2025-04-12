@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
 from app.config import settings, setup_logging
-from app.api.routes import router as api_router
+from app.api.routes import template_router as api_router
 
 # ロギング設定を初期化 (configモジュールで既に実行されている場合もあるが念のため)
 setup_logging()
@@ -20,8 +20,8 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="AI Process Blueprint",
         description="テンプレートベースでAIに作業手順を提供するサービス",
-        version=settings.VERSION,
-        debug=settings.DEBUG,
+        version=settings.version,
+        debug=settings.debug,
     )
     
     # Configure CORS
@@ -39,10 +39,10 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         logger.info("Application startup")
-        logger.info(f"Debug mode: {settings.DEBUG}")
-        logger.info(f"Template directory: {settings.TEMPLATE_DIR}")
-        logger.info(f"HTTP API Enabled: {settings.ENABLE_HTTP}")
-        logger.info(f"MCP Enabled: {settings.ENABLE_MCP}")
+        logger.info(f"Debug mode: {settings.debug}")
+        logger.info(f"Template directory: {settings.template_dir}")
+        logger.info(f"HTTP API Enabled: {settings.enable_http}")
+        logger.info(f"MCP Enabled: {settings.enable_mcp}")
 
     @app.on_event("shutdown")
     async def shutdown_event():
@@ -60,16 +60,16 @@ def create_app() -> FastAPI:
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": settings.VERSION
+            "version": settings.version
         }
 
     # APIルーターとMCPサーバーのマウント
-    if settings.ENABLE_HTTP:
+    if settings.enable_http:
         from app.api.routes import template_router
         logger.info("Registering HTTP API routes...")
         app.include_router(template_router)
 
-    if settings.ENABLE_MCP:
+    if settings.enable_mcp:
         from app.mcp.tools import mcp_server
         logger.info("Mounting MCP server...")
         # FastMCP v0.4.0以降では .app は不要かもしれないが、互換性のために残す

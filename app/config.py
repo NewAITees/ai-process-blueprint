@@ -28,12 +28,12 @@ class Settings(BaseSettings):
     # Application version (placeholder)
     version: str = "0.1.0"
     
-    class Config:
-        """Pydantic configuration."""
+    model_config = {
         # .envファイルを優先的に読み込む設定 (pydantic-settings v2以降)
         # env_file = ".env"
         # env_file_encoding = 'utf-8'
-        case_sensitive = True
+        "case_sensitive": True
+    }
 
 
 # Create a global settings instance

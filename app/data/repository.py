@@ -227,10 +227,10 @@ class FileSystemTemplateRepository(TemplateRepository):
             logger.error(f"Failed to serialize YAML front matter for {template.title}: {e}")
             raise TemplateIOError(f"Failed to generate YAML for template {template.title}: {e}") from e
 
-        file_content = f"---
+        file_content = f"""---
 {yaml_frontmatter}---
 
-{template.content}"
+{template.content}"""
         
         await self._safe_write(file_path, file_content)
 
