@@ -36,20 +36,14 @@ GET /templates
   "templates": [
     {
       "title": "データ分析レポート作成",
+      "content": "# データ分析レポート\n\n...",
       "description": "データ分析プロジェクトを体系的に進めるためのガイド",
       "username": "data_analyst",
       "created_at": "2025-04-11T10:30:00Z",
       "updated_at": "2025-04-11T10:30:00Z"
-    },
-    {
-      "title": "バグ修正手順",
-      "description": "ソフトウェアバグを特定して修正するための手順",
-      "username": "developer",
-      "created_at": "2025-04-10T14:15:00Z",
-      "updated_at": "2025-04-10T14:15:00Z"
     }
   ],
-  "total": 2,
+  "total": 1,
   "limit": 20,
   "offset": 0
 }
@@ -137,15 +131,12 @@ POST /templates
 }
 ```
 
-- **ステータスコード**: 400 Bad Request
+- **ステータスコード**: 422 Unprocessable Entity
 
 ```json
 {
-  "error": "Validation error",
-  "message": "タイトルは必須です",
-  "details": {
-    "title": "この項目は必須です"
-  }
+  "error": "Validation Error",
+  "message": "Template title cannot be empty"
 }
 ```
 
@@ -264,6 +255,27 @@ MCP (Model Context Protocol) インターフェースは、AI アシスタント
       }
     },
     {
+      "name": "list_templates",
+      "description": "テンプレート一覧を取得します",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "取得するテンプレートの最大数（オプション、デフォルト: 20）"
+          },
+          "offset": {
+            "type": "integer",
+            "description": "結果セットの開始位置（オプション、デフォルト: 0）"
+          },
+          "username": {
+            "type": "string",
+            "description": "特定ユーザーのテンプレートのみをフィルタリング（オプション）"
+          }
+        }
+      }
+    },
+    {
       "name": "register_template",
       "description": "新しいテンプレートを登録します",
       "parameters": {
@@ -279,11 +291,11 @@ MCP (Model Context Protocol) インターフェースは、AI アシスタント
           },
           "description": {
             "type": "string",
-            "description": "テンプレートの説明（オプション）"
+            "description": "テンプレートの説明（オプション、デフォルト: 空文字列）"
           },
           "username": {
             "type": "string",
-            "description": "作成者のユーザー名（オプション）"
+            "description": "作成者のユーザー名（オプション、デフォルト: ai_assistant）"
           }
         },
         "required": ["title", "content"]
@@ -301,7 +313,7 @@ MCP (Model Context Protocol) インターフェースは、AI アシスタント
           },
           "content": {
             "type": "string",
-            "description": "新しいテンプレート内容"
+            "description": "新しいテンプレート内容（オプション）"
           },
           "description": {
             "type": "string",
@@ -328,27 +340,6 @@ MCP (Model Context Protocol) インターフェースは、AI アシスタント
         },
         "required": ["title"]
       }
-    },
-    {
-      "name": "list_templates",
-      "description": "テンプレート一覧を取得します",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "limit": {
-            "type": "integer",
-            "description": "取得するテンプレートの最大数（オプション）"
-          },
-          "offset": {
-            "type": "integer",
-            "description": "結果セットの開始位置（オプション）"
-          },
-          "username": {
-            "type": "string",
-            "description": "特定ユーザーのテンプレートのみをフィルタリング（オプション）"
-          }
-        }
-      }
     }
   ]
 }
@@ -360,8 +351,22 @@ MCP (Model Context Protocol) インターフェースは、AI アシスタント
 
 ```python
 result = await get_template(title="データ分析レポート作成")
-print(f"テンプレート: {result['title']}")
-print(f"内容: {result['content']}")
+if "error" not in result:
+    print(f"テンプレート: {result['title']}")
+    print(f"内容: {result['content']}")
+else:
+    print(f"エラー: {result['message']}")
+```
+
+#### テンプレート一覧取得
+
+```python
+result = await list_templates(limit=5, offset=0)
+if "templates" in result:
+    for template in result['templates']:
+        print(f"- {template['title']} (作成者: {template['username']})")
+else:
+    print(f"エラー: {result.get('message', '不明なエラー')}")
 ```
 
 #### テンプレート登録
@@ -373,27 +378,22 @@ result = await register_template(
     description="テスト用テンプレート",
     username="tester"
 )
-print(f"作成結果: {result}")
+if "error" not in result:
+    print(f"作成成功: {result['title']}")
+else:
+    print(f"エラー: {result['message']}")
 ```
 
-#### テンプレート一覧取得
+## 3. エラーレスポンス
 
-```python
-result = await list_templates(limit=5, offset=0)
-for template in result['templates']:
-    print(f"- {template['title']} (作成者: {template['username']})")
-```
+共通のエラーレスポンスとそのステータスコードを示します。
 
-## 3. エラーコード
-
-共通のエラーコードとそのHTTPステータスコードを示します。
-
-| エラーコード | HTTPステータス | 説明 |
-|------------|--------------|------|
-| `TEMPLATE_NOT_FOUND` | 404 | 指定されたタイトルのテンプレートが見つかりません |
-| `TEMPLATE_ALREADY_EXISTS` | 409 | 同じタイトルのテンプレートが既に存在します |
-| `VALIDATION_ERROR` | 400 | 入力データが検証に失敗しました |
-| `INTERNAL_SERVER_ERROR` | 500 | サーバー内部でエラーが発生しました |
+| エラー | HTTPステータス | レスポンス形式 |
+|-------|--------------|-------------|
+| テンプレートが見つからない | 404 | `{"error": "Template not found", "message": "..."}` |
+| テンプレートが既に存在する | 409 | `{"error": "Template already exists", "message": "..."}` |
+| 入力バリデーションエラー | 422 | `{"error": "Validation Error", "message": "..."}` |
+| サーバー内部エラー | 500 | `{"error": "Internal Server Error", "message": "..."}` |
 
 ## 4. データモデル
 
