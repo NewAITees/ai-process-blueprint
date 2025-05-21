@@ -23,11 +23,9 @@ except ImportError:
      from app.data.repository import FileSystemTemplateRepository, TemplateRepository
      from app.config import settings
      def get_template_repository() -> TemplateRepository:
-         return FileSystemTemplateRepository(settings.TEMPLATE_DIR)
-     def get_template_service(
-         repository: TemplateRepository = Depends(get_template_repository)
-     ) -> TemplateService:
-         return TemplateService(repository)
+         return FileSystemTemplateRepository(settings.template_dir)
+     def get_template_service() -> TemplateService:
+         return TemplateService(get_template_repository())
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +61,7 @@ async def get_template(title: str) -> Dict[str, Any]:
     Raises:
         Does not raise exceptions directly to the MCP client, returns error dictionary instead.
     """
+    service = get_template_service()
     logger.info(f"[MCP] Received request to get template: {title}")
     service = get_service()
     try:
@@ -101,6 +100,7 @@ async def list_templates(
                       Example success: {"templates": [...], "total": N, "limit": L, "offset": O}
                       Example error: {"error": "Internal Server Error", "message": "..."}
     """
+    service = get_template_service()
     logger.info(f"[MCP] Received request to list templates: limit={limit}, offset={offset}, username={username}")
     service = get_service()
     
@@ -153,6 +153,7 @@ async def register_template(
                       Example success: {"title": "...", "content": "...", ...}
                       Example error: {"error": "Template already exists", "message": "..."}
     """
+    service = get_template_service()
     logger.info(f"[MCP] Received request to register template: {title}")
     service = get_service()
     try:
@@ -184,7 +185,7 @@ async def update_template(
     title: str,
     content: Optional[str] = None,
     description: Optional[str] = None,
-    username: Optional[str] = None # 更新者名を指定可能に
+    username: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Updates an existing template. Only provided fields (content, description, username) are updated.
@@ -201,6 +202,7 @@ async def update_template(
                       Example success: {"title": "...", "content": "...", ...}
                       Example error: {"error": "Template not found", "message": "..."}
     """
+    service = get_template_service()
     logger.info(f"[MCP] Received request to update template: {title}")
     service = get_service()
     
@@ -212,7 +214,7 @@ async def update_template(
         template_update = TemplateUpdate(
             content=content,
             description=description,
-            username=username # サービス側でNoneなら既存の値を維持する想定
+            username=username
         )
         updated_template = await service.update_template(title, template_update)
         logger.info(f"[MCP] Successfully updated template: {title}")
@@ -244,6 +246,7 @@ async def delete_template(title: str) -> Dict[str, Any]:
                       Example success: {"status": "success", "message": "Template '...' deleted successfully"}
                       Example error: {"error": "Template not found", "message": "..."}
     """
+    service = get_template_service()
     logger.info(f"[MCP] Received request to delete template: {title}")
     service = get_service()
     try:
