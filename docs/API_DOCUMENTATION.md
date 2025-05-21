@@ -83,8 +83,7 @@ GET /templates/{title}
 
 ```json
 {
-  "error": "Template not found",
-  "message": "指定されたタイトルのテンプレートが見つかりません"
+  "detail": "Template not found"
 }
 ```
 
@@ -114,7 +113,7 @@ POST /templates
 
 **オプションフィールド**:
 - `description`: テンプレートの説明（デフォルト: 空文字列）
-- `username`: 作成者名（デフォルト: "anonymous"）
+- `username`: 作成者名（デフォルト: "ai_assistant"）
 
 **レスポンス**:
 
@@ -135,8 +134,7 @@ POST /templates
 
 ```json
 {
-  "error": "Validation Error",
-  "message": "Template title cannot be empty"
+  "detail": "Template title cannot be empty"
 }
 ```
 
@@ -144,8 +142,7 @@ POST /templates
 
 ```json
 {
-  "error": "Template already exists",
-  "message": "同じタイトルのテンプレートが既に存在します"
+  "detail": "Template with this title already exists"
 }
 ```
 
@@ -198,8 +195,7 @@ PUT /templates/{title}
 
 ```json
 {
-  "error": "Template not found",
-  "message": "指定されたタイトルのテンプレートが見つかりません"
+  "detail": "Template not found"
 }
 ```
 
@@ -226,8 +222,7 @@ DELETE /templates/{title}
 
 ```json
 {
-  "error": "Template not found",
-  "message": "指定されたタイトルのテンプレートが見つかりません"
+  "detail": "Template not found"
 }
 ```
 
@@ -390,10 +385,10 @@ else:
 
 | エラー | HTTPステータス | レスポンス形式 |
 |-------|--------------|-------------|
-| テンプレートが見つからない | 404 | `{"error": "Template not found", "message": "..."}` |
-| テンプレートが既に存在する | 409 | `{"error": "Template already exists", "message": "..."}` |
-| 入力バリデーションエラー | 422 | `{"error": "Validation Error", "message": "..."}` |
-| サーバー内部エラー | 500 | `{"error": "Internal Server Error", "message": "..."}` |
+| テンプレートが見つからない | 404 | `{"detail": "Template not found"}` |
+| テンプレートが既に存在する | 409 | `{"detail": "Template with this title already exists"}` |
+| 入力バリデーションエラー | 422 | `{"detail": "Validation error message"}` |
+| サーバー内部エラー | 500 | `{"detail": "Internal server error"}` |
 
 ## 4. データモデル
 
