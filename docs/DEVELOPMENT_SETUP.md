@@ -5,7 +5,7 @@
 ## 前提条件
 
 - Python 3.9以上
-- pip またはPoetry（推奨）
+- pip またはuv（推奨）
 - Docker と Docker Compose（オプション、コンテナ開発用）
 - Git
 
@@ -33,18 +33,15 @@ poetry install
 # 依存関係をインストール
 ```
 
-### 2.2 Poetry を使う方法（推奨）
+### 2.2 uv を使う方法（推奨）
 
-```bash
-# Poetry がインストールされていない場合
-# curl -sSL https://install.python-poetry.org | python3 -
+# uv がインストールされていない場合
+# curl -sSL https://astral.sh/uv/install.sh | sh
 
-# 依存関係をインストール
-poetry install
+uv pip install -r requirements.txt
 
 # 仮想環境を有効化
-poetry shell
-```
+source .venv/bin/activate
 
 ## 3. 環境変数の設定
 
@@ -240,3 +237,6 @@ docker-compose up -d
 - [SQLAlchemy ドキュメント](https://docs.sqlalchemy.org/)
 - [Pydantic ドキュメント](https://pydantic-docs.helpmanual.io/)
 - [Pytest ドキュメント](https://docs.pytest.org/)
+
+# uv を使用している場合
+uv pip sync

@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="11" failures="3" skipped="0" tests="26" time="0.806" timestamp="2025-06-15T16:48:12.616316+09:00" hostname="MacBook-Air.local"><testcase classname="tests.test_api.test_routes" name="test_create_template" time="0.003"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_create_template0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_create_template0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_api.test_routes" name="test_get_template" time="0.001"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_get_template0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_get_template0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_api.test_routes" name="test_update_template" time="0.001"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_update_template0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_update_template0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_api.test_routes" name="test_delete_template" time="0.001"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_delete_template0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_delete_template0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_api.test_routes" name="test_list_templates" time="0.001"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_list_templates0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_list_templates0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_core.test_services" name="test_create_template" time="0.010" /><testcase classname="tests.test_core.test_services" name="test_get_template" time="0.005" /><testcase classname="tests.test_core.test_services" name="test_update_template" time="0.008" /><testcase classname="tests.test_core.test_services" name="test_delete_template" time="0.005" /><testcase classname="tests.test_core.test_services" name="test_list_templates" time="0.006" /><testcase classname="tests.test_data.test_repository" name="test_create_template" time="0.004" /><testcase classname="tests.test_data.test_repository" name="test_get_template" time="0.004" /><testcase classname="tests.test_data.test_repository" name="test_update_template" time="0.006" /><testcase classname="tests.test_data.test_repository" name="test_delete_template" time="0.003" /><testcase classname="tests.test_data.test_repository" name="test_list_templates" time="0.005" /><testcase classname="tests.test_integration.test_app" name="test_template_workflow" time="0.001"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_template_workflow0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_template_workflow0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_integration.test_app" name="test_concurrent_template_operations" time="0.001"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_concurrent_template_opera0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_concurrent_template_opera0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_integration.test_app" name="test_error_handling" time="0.001"><error message="failed on setup with &quot;ValueError: &quot;Settings&quot; object has no field &quot;TEMPLATE_DIR&quot;&quot;">test_template_dir = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_error_handling0/templates')
+
+    @pytest.fixture
+    def api_client(test_template_dir):
+        """テスト用のFastAPI TestClientを作成"""
+        # アプリケーションがTEMPLATE_DIRを読み込み直すようにする
+        from app.config import settings
+&gt;       settings.TEMPLATE_DIR = test_template_dir
+
+tests/conftest.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/pydantic/main.py:995: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Settings(port=8080, template_dir=PosixPath('/Users/Persona_1/Documents/project/ai-process-blueprint/test_templates'), log_level='info', enable_mcp=True, enable_http=True, debug=False, version='0.1.0')
+name = 'TEMPLATE_DIR'
+value = PosixPath('/private/var/folders/4h/zk1drz0x645525m63ldgpvx00000gn/T/pytest-of-Persona_1/pytest-0/test_error_handling0/templates')
+
+    def _setattr_handler(self, name: str, value: Any) -&gt; Callable[[BaseModel, str, Any], None] | None:
+        """Get a handler for setting an attribute on the model instance.
+    
+        Returns:
+            A handler for setting an attribute on the model instance. Used for memoization of the handler.
+            Memoizing the handlers leads to a dramatic performance improvement in `__setattr__`
+            Returns `None` when memoization is not safe, then the attribute is set directly.
+        """
+        cls = self.__class__
+        if name in cls.__class_vars__:
+            raise AttributeError(
+                f'{name!r} is a ClassVar of `{cls.__name__}` and cannot be set on an instance. '
+                f'If you want to set a value on the class, use `{cls.__name__}.{name} = value`.'
+            )
+        elif not _fields.is_valid_field_name(name):
+            if (attribute := cls.__private_attributes__.get(name)) is not None:
+                if hasattr(attribute, '__set__'):
+                    return lambda model, _name, val: attribute.__set__(model, val)
+                else:
+                    return _SIMPLE_SETATTR_HANDLERS['private']
+            else:
+                _object_setattr(self, name, value)
+                return None  # Can not return memoized handler with possibly freeform attr names
+    
+        attr = getattr(cls, name, None)
+        # NOTE: We currently special case properties and `cached_property`, but we might need
+        # to generalize this to all data/non-data descriptors at some point. For non-data descriptors
+        # (such as `cached_property`), it isn't obvious though. `cached_property` caches the value
+        # to the instance's `__dict__`, but other non-data descriptors might do things differently.
+        if isinstance(attr, cached_property):
+            return _SIMPLE_SETATTR_HANDLERS['cached_property']
+    
+        _check_frozen(cls, name, value)
+    
+        # We allow properties to be set only on non frozen models for now (to match dataclasses).
+        # This can be changed if it ever gets requested.
+        if isinstance(attr, property):
+            return lambda model, _name, val: attr.__set__(model, val)
+        elif cls.model_config.get('validate_assignment'):
+            return _SIMPLE_SETATTR_HANDLERS['validate_assignment']
+        elif name not in cls.__pydantic_fields__:
+            if cls.model_config.get('extra') != 'allow':
+                # TODO - matching error
+&gt;               raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+E               ValueError: "Settings" object has no field "TEMPLATE_DIR"
+
+.venv/lib/python3.11/site-packages/pydantic/main.py:1042: ValueError</error></testcase><testcase classname="tests.test_mcp.test_tools" name="test_get_template_tool" time="0.005"><failure message="KeyError: 'title'">template_service = &lt;app.core.services.TemplateService object at 0x111fc1b50&gt;
+sample_template_data = {'content': '# テストテンプレート\n\nこれはテスト用のテンプレートです。', 'description': 'テスト用のテンプレート説明', 'title': 'テストテンプレート', 'username': 'tester'}
+
+    async def test_get_template_tool(template_service, sample_template_data):
+        # サービスを使用してテンプレートを作成
+        template_create = TemplateCreate(**sample_template_data)
+        await template_service.create_template(template_create)
+    
+        # MCPツールでのテンプレート取得テスト
+        result = await get_template(title=sample_template_data["title"])
+    
+&gt;       assert result["title"] == sample_template_data["title"]
+E       KeyError: 'title'
+
+tests/test_mcp/test_tools.py:13: KeyError</failure></testcase><testcase classname="tests.test_mcp.test_tools" name="test_register_template_tool" time="0.006" /><testcase classname="tests.test_mcp.test_tools" name="test_update_template_tool" time="0.009" /><testcase classname="tests.test_mcp.test_tools" name="test_delete_template_tool" time="0.005"><failure message="KeyError: 'success'">template_service = &lt;app.core.services.TemplateService object at 0x111fda590&gt;
+sample_template_data = {'content': '# テストテンプレート\n\nこれはテスト用のテンプレートです。', 'description': 'テスト用のテンプレート説明', 'title': 'テストテンプレート', 'username': 'tester'}
+
+    async def test_delete_template_tool(template_service, sample_template_data):
+        # テンプレート作成
+        template_create = TemplateCreate(**sample_template_data)
+        await template_service.create_template(template_create)
+    
+        # MCPツールでのテンプレート削除テスト
+        result = await delete_template(title=sample_template_data["title"])
+&gt;       assert result["success"] is True
+E       KeyError: 'success'
+
+tests/test_mcp/test_tools.py:63: KeyError</failure></testcase><testcase classname="tests.test_mcp.test_tools" name="test_list_templates_tool" time="0.005"><failure message="assert 0 &gt;= 1&#10; +  where 0 = len([])">template_service = &lt;app.core.services.TemplateService object at 0x111fd8090&gt;
+sample_template_data = {'content': '# テストテンプレート\n\nこれはテスト用のテンプレートです。', 'description': 'テスト用のテンプレート説明', 'title': 'テストテンプレート', 'username': 'tester'}
+
+    async def test_list_templates_tool(template_service, sample_template_data):
+        # テンプレート作成
+        template_create = TemplateCreate(**sample_template_data)
+        await template_service.create_template(template_create)
+    
+        # MCPツールでのテンプレート一覧取得テスト
+        result = await list_templates()
+    
+        assert "templates" in result
+        templates = result["templates"]
+&gt;       assert len(templates) &gt;= 1
+E       assert 0 &gt;= 1
+E        +  where 0 = len([])
+
+tests/test_mcp/test_tools.py:84: AssertionError</failure></testcase><testcase classname="tests.test_template_service" name="test_template_directory_exists" time="0.000"><error message="failed on setup with &quot;file /Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py, line 9&#10;  def test_template_directory_exists(template_dir):&#10;E       fixture 'template_dir' not found&#10;&gt;       available fixtures: _session_event_loop, anyio_backend, anyio_backend_name, anyio_backend_options, api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, cov, doctest_namespace, event_loop, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_template, sample_template_data, template_repository, template_service, test_template_dir, tests/test_template_service.py::&lt;event_loop&gt;, tests::&lt;event_loop&gt;, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py:9&quot;">file /Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py, line 9
+  def test_template_directory_exists(template_dir):
+E       fixture 'template_dir' not found
+&gt;       available fixtures: _session_event_loop, anyio_backend, anyio_backend_name, anyio_backend_options, api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, cov, doctest_namespace, event_loop, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_template, sample_template_data, template_repository, template_service, test_template_dir, tests/test_template_service.py::&lt;event_loop&gt;, tests::&lt;event_loop&gt;, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py:9</error></testcase><testcase classname="tests.test_template_service" name="test_template_file_creation" time="0.000"><error message="failed on setup with &quot;file /Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py, line 15&#10;  def test_template_file_creation(template_dir):&#10;E       fixture 'template_dir' not found&#10;&gt;       available fixtures: _session_event_loop, anyio_backend, anyio_backend_name, anyio_backend_options, api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, cov, doctest_namespace, event_loop, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_template, sample_template_data, template_repository, template_service, test_template_dir, tests/test_template_service.py::&lt;event_loop&gt;, tests::&lt;event_loop&gt;, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py:15&quot;">file /Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py, line 15
+  def test_template_file_creation(template_dir):
+E       fixture 'template_dir' not found
+&gt;       available fixtures: _session_event_loop, anyio_backend, anyio_backend_name, anyio_backend_options, api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, cov, doctest_namespace, event_loop, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_template, sample_template_data, template_repository, template_service, test_template_dir, tests/test_template_service.py::&lt;event_loop&gt;, tests::&lt;event_loop&gt;, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py:15</error></testcase><testcase classname="tests.test_template_service" name="test_template_file_content" time="0.001"><error message="failed on setup with &quot;file /Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py, line 29&#10;  def test_template_file_content(template_dir):&#10;E       fixture 'template_dir' not found&#10;&gt;       available fixtures: _session_event_loop, anyio_backend, anyio_backend_name, anyio_backend_options, api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, cov, doctest_namespace, event_loop, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_template, sample_template_data, template_repository, template_service, test_template_dir, tests/test_template_service.py::&lt;event_loop&gt;, tests::&lt;event_loop&gt;, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py:29&quot;">file /Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py, line 29
+  def test_template_file_content(template_dir):
+E       fixture 'template_dir' not found
+&gt;       available fixtures: _session_event_loop, anyio_backend, anyio_backend_name, anyio_backend_options, api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, cov, doctest_namespace, event_loop, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_template, sample_template_data, template_repository, template_service, test_template_dir, tests/test_template_service.py::&lt;event_loop&gt;, tests::&lt;event_loop&gt;, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/Persona_1/Documents/project/ai-process-blueprint/tests/test_template_service.py:29</error></testcase></testsuite></testsuites>

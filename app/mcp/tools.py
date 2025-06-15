@@ -12,20 +12,15 @@ from app.core.services import (
     TemplateValidationError,
     TemplateServiceError
 )
-from app.data.repository import TemplateIOError
-# APIルートから依存性注入関数をインポート (循環参照に注意)
-# より良い設計は、依存性注入の設定を別の共有モジュール (例: app/dependencies.py) に置くこと
-try:
-    from app.api.routes import get_template_service
-except ImportError:
-     # 暫定対応: routesが先に読み込まれていない場合、ここで再定義
-     # 本来は DI コンテナや共有モジュールを使うべき
-     from app.data.repository import FileSystemTemplateRepository, TemplateRepository
-     from app.config import settings
-     def get_template_repository() -> TemplateRepository:
-         return FileSystemTemplateRepository(settings.template_dir)
-     def get_template_service() -> TemplateService:
-         return TemplateService(get_template_repository())
+from app.data.repository import TemplateIOError, FileSystemTemplateRepository, TemplateRepository
+from app.config import settings
+
+# 依存性注入関数を定義
+def get_template_repository() -> TemplateRepository:
+    return FileSystemTemplateRepository(settings.template_dir)
+
+def get_template_service() -> TemplateService:
+    return TemplateService(get_template_repository())
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +36,7 @@ mcp_server = FastMCP(
 
 def get_service():
     """Helper to get template service instance without FastAPI dependency injection"""
-    repo = FileSystemTemplateRepository(settings.template_dir)
-    return TemplateService(repo)
+    return get_template_service()
 
 @mcp_server.tool()
 async def get_template(title: str) -> Dict[str, Any]:
@@ -61,7 +55,6 @@ async def get_template(title: str) -> Dict[str, Any]:
     Raises:
         Does not raise exceptions directly to the MCP client, returns error dictionary instead.
     """
-    service = get_template_service()
     logger.info(f"[MCP] Received request to get template: {title}")
     service = get_service()
     try:
@@ -100,7 +93,6 @@ async def list_templates(
                       Example success: {"templates": [...], "total": N, "limit": L, "offset": O}
                       Example error: {"error": "Internal Server Error", "message": "..."}
     """
-    service = get_template_service()
     logger.info(f"[MCP] Received request to list templates: limit={limit}, offset={offset}, username={username}")
     service = get_service()
     
@@ -153,7 +145,6 @@ async def register_template(
                       Example success: {"title": "...", "content": "...", ...}
                       Example error: {"error": "Template already exists", "message": "..."}
     """
-    service = get_template_service()
     logger.info(f"[MCP] Received request to register template: {title}")
     service = get_service()
     try:
@@ -202,7 +193,6 @@ async def update_template(
                       Example success: {"title": "...", "content": "...", ...}
                       Example error: {"error": "Template not found", "message": "..."}
     """
-    service = get_template_service()
     logger.info(f"[MCP] Received request to update template: {title}")
     service = get_service()
     
@@ -246,7 +236,6 @@ async def delete_template(title: str) -> Dict[str, Any]:
                       Example success: {"status": "success", "message": "Template '...' deleted successfully"}
                       Example error: {"error": "Template not found", "message": "..."}
     """
-    service = get_template_service()
     logger.info(f"[MCP] Received request to delete template: {title}")
     service = get_service()
     try:

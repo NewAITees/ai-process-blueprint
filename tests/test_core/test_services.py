@@ -1,6 +1,6 @@
 import pytest
 from app.schemas.models import TemplateCreate, TemplateUpdate
-from app.core.exceptions import TemplateNotFoundError, TemplateAlreadyExistsError
+from app.core.services import TemplateNotFoundError, TemplateAlreadyExistsError
 
 async def test_create_template(template_service, sample_template_data):
     # テンプレート作成テスト

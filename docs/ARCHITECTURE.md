@@ -137,7 +137,7 @@ sequenceDiagram
 - **データ永続化**: SQLite / ファイルシステム
 - **API ドキュメント**: Swagger UI (OpenAPI)
 - **コンテナ化**: Docker
-- **依存関係管理**: Poetry / Pip
+- **依存関係管理**: uv / Pip
 
 ## スケーラビリティと拡張性
 
